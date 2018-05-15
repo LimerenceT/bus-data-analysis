@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Leaflet</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1iTarA_znvFNeEXrXInrRjQLKPB0yaKM" async defer></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+<script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
+    <script type="text/javascript" src="google.js"></script>
+    <script type="text/javascript" src="location.js"></script>
+  </head>
+  <body>
+    <div style="width:1000px; height:700px" id="map"></div>
+    <script type='text/javascript'>
+      var map = new L.Map('map', {center: new L.LatLng(29.55884,106.53963), zoom: 15});
+      // var googleLayer = new L.Google('ROADMAP');
+      // map.addLayer(googleLayer);
+
+
+
+var geojsonMarkerOptions = {
+    radius: 8,
+    fillColor: "#ff7800",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+};
+function onEachFeature(feature, layer) {
+    // does this feature have a property named popupContent?
+    if (feature.properties && feature.properties.info) {
+        layer.bindPopup(feature.properties.info);
+    }
+}
+
+      L.geoJSON(ss, {onEachFeature: onEachFeature,pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, geojsonMarkerOptions);
+    }}).addTo(map);
+
+
+      var roads = L.gridLayer.googleMutant({
+        type: 'satellite' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+    }).addTo(map);
+
+
+    </script>
+  </body>
+</html>
