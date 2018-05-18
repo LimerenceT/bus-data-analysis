@@ -4,29 +4,66 @@
 """
 convert_json
 
-读取数据库，将需要的经纬度写入json文件给百度api描点用
+读取数据库，将需要的经纬度写入json文件给谷歌地图api描点用
 """
 import sqlite3
 import geojson
 
-con = sqlite3.connect('bus.db')
-c = con.cursor()
-result = c.execute(
-    "select CARID, LONGITUDE, LATITUDE, GPS_TIME, STANDSPEED, SPEED from bus where GPS_TIME like '2017/03/16 06%' and CARID='12020'").fetchall()
-print(len(result))
-feature_collection = [geojson.Feature(geometry=geojson.Point(point[1:3]),
-                                      properties={"info": "车辆：{carid} \n"
-                                                         "经纬度：{latlng}\n"
-                                                         "日期：{time}\n"
-                                                         "标准速度：{standspeed}\n"
-                                                         "速度：{speed}".format(carid=point[0],
-                                                                             latlng=point[1:3],
-                                                                             time=point[3],
-                                                                             standspeed=point[4],
-                                                                             speed=point[5])}) for point in result]
-feature_collection.append(geojson.Feature(geometry=geojson.LineString([point[1:3] for point in result])))
-location = geojson.FeatureCollection(feature_collection)
-with open("location.js", 'w', encoding='utf-8') as f:
-    f.write(geojson.dumps(location, indent=4))
-c.close()
-con.close()
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def get_data(carid: str, start: str, end: str) -> list:
+    """返回database中需要的数据"""
+    con = sqlite3.connect('bus.db')
+    # apply the function to the sqlite3 engine
+    con.row_factory = dict_factory
+    sql = ("select CARID, LONGITUDE, LATITUDE, GPS_TIME, STANDSPEED, SPEED, DEF1, ACTIVE from bus "
+           "where GPS_TIME>'{start}' and GPS_TIME <'{end}' "
+           "and CARID='{carid}' "
+           "order by GPS_TIME").format(start=start, end=end, carid=carid)
+    print(sql)
+    data = con.execute(sql).fetchall()
+    print(len(data))
+    con.close()
+    return data
+
+
+def gen(result: list) -> geojson:
+    """将result每一项生成对应feature，然后组成一个feature的集合并返回"""
+    feature_collection = []
+    points = []
+    for point in result:
+        if not point["LONGITUDE"]:
+            continue
+        geometry = geojson.Point((point["LONGITUDE"], point["LATITUDE"]))
+        points.append([point["LONGITUDE"], point["LATITUDE"]])
+        feature_collection.append(geojson.Feature(geometry=geometry,
+                                                  properties={"info": "车辆：{carid}<br>"
+                                                                      "线路：{def1}<br>"
+                                                                      "经纬度：{latlng}<br>"
+                                                                      "active：{active}<br>"
+                                                                      "日期：{time}<br>"
+                                                                      "标准速度：{standspeed}<br>"
+                                                                      "速度：{speed}".format(carid=point["CARID"],
+                                                                                          def1=point["DEF1"],
+                                                                                          latlng=(point["LONGITUDE"], point["LATITUDE"]),
+                                                                                          time=point["GPS_TIME"],
+                                                                                          standspeed=point["STANDSPEED"],
+                                                                                          speed=point["SPEED"],
+                                                                                          active=point["ACTIVE"])}))
+
+    feature_collection.append(geojson.Feature(geometry=geojson.LineString(points)))
+    return feature_collection
+
+
+def get_result(carid: str, start: str, end: str) -> dict:
+    """根据开始结束日期，返回相应的结果"""
+    data = get_data(carid, start, end)
+    feature_collection = gen(data)
+    location = geojson.FeatureCollection(feature_collection)
+    return location

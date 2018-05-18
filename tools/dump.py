@@ -16,8 +16,8 @@ from xlrd import xldate_as_tuple
 con = sqlite3.connect('bus.db')
 c = con.cursor()
 
-for filename in os.listdir("../track/"):
-    bus = xlrd.open_workbook(os.path.join('../track/', filename))
+for filename in os.listdir("./track/"):
+    bus = xlrd.open_workbook(os.path.join('./track/', filename))
     sheet = bus.sheet_by_index(0)
     for row in range(1, sheet.nrows):
         row_val = sheet.row_values(row)
