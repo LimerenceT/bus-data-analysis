@@ -17,20 +17,24 @@ def dict_factory(cursor, row):
     return d
 
 
-def get_data(carid: str, start: str, end: str) -> list:
+def get_data(sql: str) -> list:
     """返回database中需要的数据"""
     con = sqlite3.connect('bus.db')
     # apply the function to the sqlite3 engine
     con.row_factory = dict_factory
-    sql = ("select CARID, LONGITUDE, LATITUDE, GPS_TIME, STANDSPEED, SPEED, DEF1, ACTIVE from bus "
-           "where GPS_TIME>'{start}' and GPS_TIME <'{end}' "
-           "and CARID='{carid}' "
-           "order by GPS_TIME").format(start=start, end=end, carid=carid)
     print(sql)
     data = con.execute(sql).fetchall()
     print(len(data))
     con.close()
     return data
+
+
+def gen_sql(carid: str, start: str, end: str) -> str:
+    sql = ("select CARID, LONGITUDE, LATITUDE, GPS_TIME, STANDSPEED, SPEED, DEF1, ACTIVE from bus "
+           "where GPS_TIME>'{start}' and GPS_TIME <'{end}' "
+           "and CARID='{carid}' "
+           "order by GPS_TIME").format(start=start, end=end, carid=carid)
+    return sql
 
 
 def gen(result: list) -> geojson:
@@ -55,7 +59,9 @@ def gen(result: list) -> geojson:
                                                                                           time=point["GPS_TIME"],
                                                                                           standspeed=point["STANDSPEED"],
                                                                                           speed=point["SPEED"],
-                                                                                          active=point["ACTIVE"])}))
+                                                                                          active=point["ACTIVE"]),
+                                                              "line": point["DEF1"],
+                                                              }))
 
     feature_collection.append(geojson.Feature(geometry=geojson.LineString(points)))
     return feature_collection
@@ -63,7 +69,8 @@ def gen(result: list) -> geojson:
 
 def get_result(carid: str, start: str, end: str) -> dict:
     """根据开始结束日期，返回相应的结果"""
-    data = get_data(carid, start, end)
+    sql = gen_sql(carid,  start, end)
+    data = get_data(sql)
     feature_collection = gen(data)
     location = geojson.FeatureCollection(feature_collection)
     return location

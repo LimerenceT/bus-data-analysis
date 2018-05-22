@@ -7,6 +7,7 @@ name = "pypi"
 xlrd = "*"
 geojson = "*"
 sanic = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -1,7 +1,7 @@
 from sanic import Sanic
 from sanic.response import json, html
-import json as js
 from convert_json import get_result
+from analysis import get_stations
 app = Sanic()
 
 
@@ -11,11 +11,17 @@ async def test(request):
         return html(f.read())
 
 
-@app.route("/<carid>/<start>/<end>")
+@app.route("/point/<carid>/<start>/<end>")
 async def tes(request, carid, start, end):
     start = start.replace('%20', ' ').replace('-', '/')
     end = end.replace('%20', ' ').replace('-', '/')
     return json(get_result(carid, start, end))
+
+
+@app.route("/line/<line>/<num>")
+async def line(request, line, num):
+    #先判断数据库有没有，没有先爬虫到数据库，在从数据库取数据
+    return json(get_stations(line)[int(num)])
 
 
 if __name__ == "__main__":

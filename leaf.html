@@ -10,7 +10,7 @@
     <script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
   </head>
   <body>
-    <div style="width:1000px; height:700px; float: left" id="map" ></div>
+    <div style="width:990px; height:700px; float: left" id="map" ></div>
 
     <div style="float: left; margin: 100px">
     <form name="form">
@@ -35,7 +35,10 @@
         <option value="39503">39503</option>
         <option value="32337">32337</option>
         <option value="81812">81812</option>
-      </select>
+      </select><br><br>
+      线路:<br>
+      <input type="text" name="line" value="">
+
       <br><br>
      起始年月日 时间:<br>
     <input type="text" name="start_datetime" value="2017-03-16 06:00:00">
@@ -45,9 +48,12 @@
     <br>
 
     </form><br>
-      <button>查询</button>
+      <button id="button_1">查询</button>
+      <button id="button_2">站点正向查询</button>
+      <button id="button_3">站点反向查询</button>
 
     </div>
+
     <script type='text/javascript'>
       var map = new L.Map('map', {center: new L.LatLng(29.55884,106.53963), zoom: 13});
 
@@ -66,15 +72,17 @@
           "opacity": 0.65
       };
       var layer = L.marker([51.5, -0.09]).addTo(map);
-
+      var line = '322';
+      form.line.value = line;
       function onEachFeature(feature, layer) {
           if (feature.properties && feature.properties.info) {
               layer.bindPopup(feature.properties.info);
+              form.line.value = feature.properties.line;
           }
       }
 
-      $("button").click(function () {
-          var url = form.carid.value+'/'+form.start_datetime.value+'/'+form.end_datetime.value;
+      $("#button_1").click(function () {
+          var url = 'point/'+form.carid.value+'/'+form.start_datetime.value+'/'+form.end_datetime.value;
          $.ajax({
              type: "GET",
              url: url,
@@ -87,13 +95,54 @@
                       pointToLayer: function (feature, latlng) {
                         return L.circleMarker(latlng, geojsonMarkerOptions);
                   }});
+
                  layer.addTo(map);
              }
 
          })
       });
+      var lineLayer1 = L.marker([51.5, -0.09]).addTo(map);
+      $("#button_2").click(function () {
+         $.ajax({
+             type: "GET",
+             url: 'line/'+form.line.value+'/0',
+             dataType: "json",
+             success: function (data) {
+                 lineLayer1.remove();
+                 lineLayer2.remove();
+                 lineLayer1 = L.geoJSON(data, {
+                      style: myStyle,
+                      onEachFeature: onEachFeature,
+                      pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng);
+                  }});
 
+                 lineLayer1.addTo(map);
+             }
 
+         })
+      });
+      var lineLayer2 = L.marker([51.5, -0.09]).addTo(map);
+      $("#button_3").click(function () {
+         $.ajax({
+             type: "GET",
+             url: 'line/'+form.line.value+'/1',
+             dataType: "json",
+             success: function (data) {
+                 lineLayer2.remove();
+                 lineLayer1.remove();
+                 lineLayer2 = L.geoJSON(data, {
+                      // style: myStyle,
+                      onEachFeature: onEachFeature,
+                      pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng);
+                  }});
+
+                 lineLayer2.addTo(map);
+             }
+
+         })
+      });
 
 
 

@@ -1,6 +1,10 @@
 # bus-data-analysis
 Bus data analysis and application.
 
+实现通过网页上选择不同的车辆和时间及时的查看想要的信息
+![描点](http://ww1.sinaimg.cn/large/d26395f3gy1frkg4k25hvj217x0lwe81.jpg)
+
+
 百度地图api不好用，换用leaflet + google map实现数据的显示
 现在数据展示的问题不大，接下来的问题怎么对数据进行分析并展示
 leaf.html 是展示结果的网页
