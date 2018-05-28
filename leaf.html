@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
 <script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
     <script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="js/leaflet-heat.js"></script>
   </head>
   <body>
     <div style="width:990px; height:700px; float: left" id="map" ></div>
@@ -41,16 +42,18 @@
 
       <br><br>
      起始年月日 时间:<br>
-    <input type="text" name="start_datetime" value="2017-03-16 06:00:00">
+    <input type="text" name="start_datetime" value="2017-03-16 12:00:00">
     <br><br>
       结束年月日 时间:<br>
-    <input type="text" name="end_datetime" value="2017-03-16 10:00:00">
+    <input type="text" name="end_datetime" value="2017-03-16 16:00:00">
     <br>
 
     </form><br>
       <button id="button_1">查询</button>
       <button id="button_2">站点正向查询</button>
-      <button id="button_3">站点反向查询</button>
+      <button id="button_3">站点反向查询</button><br><br>
+      <button id="button_4">速度热力图</button>
+
 
     </div>
 
@@ -71,13 +74,17 @@
           // "weight": 4,
           "opacity": 0.65
       };
+
       var layer = L.marker([51.5, -0.09]).addTo(map);
       var line = '322';
+      var heatmapData = '';
       form.line.value = line;
       function onEachFeature(feature, layer) {
           if (feature.properties && feature.properties.info) {
               layer.bindPopup(feature.properties.info);
-              form.line.value = feature.properties.line;
+              if (feature.properties.line) {
+                  line = feature.properties.line;
+              }
           }
       }
 
@@ -88,6 +95,7 @@
              url: url,
              dataType: "json",
              success: function (data) {
+
                  layer.remove();
                  layer = L.geoJSON(data, {
                       style: myStyle,
@@ -95,8 +103,29 @@
                       pointToLayer: function (feature, latlng) {
                         return L.circleMarker(latlng, geojsonMarkerOptions);
                   }});
+                  form.line.value=line;
+                  layer.addTo(map);
+                  // heatmapData = data.features.pop().geometry.coordinates;
 
-                 layer.addTo(map);
+                  // var heat = L.heatLayer(heatmapData, {radius: 10 ,minOpacity:1   });
+                  // heat.addTo(map);
+
+
+             }
+
+         })
+      });
+      $("#button_4").click(function () {
+          var url = 'firebase/'+form.carid.value+'/'+form.start_datetime.value+'/'+form.end_datetime.value;
+         $.ajax({
+             type: "GET",
+             url: url,
+             dataType: "json",
+             success: function (data) {
+                  layer.remove();
+                  heatmapData = data;
+                  layer = L.heatLayer(heatmapData, {radius:7, max:0.001,blur:9});
+                  layer.addTo(map);
              }
 
          })
@@ -116,7 +145,7 @@
                       pointToLayer: function (feature, latlng) {
                         return L.circleMarker(latlng);
                   }});
-
+                form.line.value=line;
                  lineLayer1.addTo(map);
              }
 
@@ -137,18 +166,17 @@
                       pointToLayer: function (feature, latlng) {
                         return L.circleMarker(latlng);
                   }});
-
+                form.line.value=line;
                  lineLayer2.addTo(map);
              }
 
          })
       });
 
-
-
       var roads = L.gridLayer.googleMutant({
         type: 'satellite' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
       }).addTo(map);
+
 
 
     </script>

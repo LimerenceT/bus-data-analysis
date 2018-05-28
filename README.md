@@ -1,6 +1,10 @@
 # bus-data-analysis
 Bus data analysis and application.
 
+实现热力图，可以用来分析堵车
+通过对起始站的确定，分析出一天跑几个来回
+![](http://ww1.sinaimg.cn/large/d26395f3gy1frr1ude8k3j213f0kwhdt.jpg)
+
 实现通过网页上选择不同的车辆和时间及时的查看想要的信息
 ![描点](http://ww1.sinaimg.cn/large/d26395f3gy1frkg4k25hvj217x0lwe81.jpg)
 

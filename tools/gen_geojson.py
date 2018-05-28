@@ -9,6 +9,8 @@ convert_json
 import sqlite3
 import geojson
 
+DATABASE = 'db/bus.db'
+
 
 def dict_factory(cursor, row):
     d = {}
@@ -19,7 +21,7 @@ def dict_factory(cursor, row):
 
 def get_data(sql: str) -> list:
     """返回database中需要的数据"""
-    con = sqlite3.connect('bus.db')
+    con = sqlite3.connect(DATABASE)
     # apply the function to the sqlite3 engine
     con.row_factory = dict_factory
     print(sql)
@@ -44,6 +46,7 @@ def gen(result: list) -> geojson:
     for point in result:
         if not point["LONGITUDE"]:
             continue
+
         geometry = geojson.Point((point["LONGITUDE"], point["LATITUDE"]))
         points.append([point["LONGITUDE"], point["LATITUDE"]])
         feature_collection.append(geojson.Feature(geometry=geometry,

@@ -1,4 +1,3 @@
-from convert_json import get_data
 import requests
 import geojson
 
