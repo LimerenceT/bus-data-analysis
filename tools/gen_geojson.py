@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-convert_json
+geo_geojson
 
-读取数据库，将需要的经纬度写入json文件给谷歌地图api描点用
+读取数据库，将需要的经纬度生成geojson传给前端渲染
 """
 import sqlite3
 import geojson
@@ -34,7 +34,7 @@ def get_data(sql: str) -> list:
 def gen_sql(carid: str, start: str, end: str) -> str:
     sql = ("select CARID, LONGITUDE, LATITUDE, GPS_TIME, STANDSPEED, SPEED, DEF1, ACTIVE from bus "
            "where GPS_TIME>'{start}' and GPS_TIME <'{end}' "
-           "and CARID='{carid}' "
+           "and CARID like '{carid}' "
            "order by GPS_TIME").format(start=start, end=end, carid=carid)
     return sql
 
@@ -48,7 +48,7 @@ def gen(result: list) -> geojson:
             continue
 
         geometry = geojson.Point((point["LONGITUDE"], point["LATITUDE"]))
-        points.append([point["LONGITUDE"], point["LATITUDE"]])
+        points.append([point["LATITUDE"], point["LONGITUDE"]])
         feature_collection.append(geojson.Feature(geometry=geometry,
                                                   properties={"info": "车辆：{carid}<br>"
                                                                       "线路：{def1}<br>"

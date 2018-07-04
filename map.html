@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Leaflet</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1iTarA_znvFNeEXrXInrRjQLKPB0yaKM" async defer></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+<script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
+    <script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="js/leaflet-heat.js"></script>
+    <script src="js/leaflet-ant-path.js"></script>
+  </head>
+  <body>
+    <div style="width:70%; height:1000px; float: left" id="map" ></div>
+
+    <div style="float: left; margin: 100px">
+    <form name="form">
+      车辆:
+        <label>
+            <select name="carid">
+              <option value="12014">12014</option>
+              <option value="12020">12020</option>
+              <option value="12214">12214</option>
+              <option value="12233">12233</option>
+              <option value="12238">12238</option>
+              <option value="12343">12343</option>
+              <option value="12349">12349</option>
+              <option value="12412">12412</option>
+              <option value="12465">12465</option>
+              <option value="12482">12482</option>
+              <option value="12788">12788</option>
+              <option value="30616">30616</option>
+              <option value="30831">30831</option>
+              <option value="30842">30842</option>
+              <option value="31174">31174</option>
+              <option value="31808">31808</option>
+              <option value="33966">33966</option>
+              <option value="35531">35531</option>
+              <option value="39503">39503</option>
+              <option value="32337">32337</option>
+              <option value="81812">81812</option>
+            </select>
+        </label><br><br>
+      线路:<br>
+        <label>
+            <input type="text" name="line" value="">
+        </label>
+
+        <br><br>
+     起始年月日 时间:<br>
+        <label>
+            <input type="text" name="start_datetime" value="2017/03/13 00:00:00">
+        </label>
+        <br><br>
+      结束年月日 时间:<br>
+        <label>
+            <input type="text" name="end_datetime" value="2017/03/13 23:59:00">
+        </label>
+        <br>
+
+    </form><br>
+      <button id="button_query">查询</button>
+      <button id="button_queryAll">全部车辆热力图</button>
+      <button id="button_speed">指定车辆热力图</button>
+      <button id="button_ant">行驶轨迹</button>
+    </div>
+
+    <script type='text/javascript'>
+        let map = new L.Map('map', {center: new L.LatLng(29.55884, 106.53963), zoom: 13});
+
+        const geojsonMarkerOptions = {
+            radius: 5,
+            fillColor: "#ff7800",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+
+        const myStyle = {
+            "color": "#27ff40",
+            // "weight": 4,
+            "opacity": 0.65
+        };
+
+        let layer = L.marker([51.5, -0.09]).addTo(map);
+        let line = '322';
+        let heatmapData = '';
+        form.line.value = line;
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.info) {
+                layer.bindPopup(feature.properties.info);
+                if (feature.properties.line) {
+                    line = feature.properties.line;
+                }
+            }
+        }
+        $("#button_ant").click(function () {
+          const url = 'point/';
+          $.ajax({
+             type: "post",
+             url: url,
+             data:JSON.stringify(
+                 {'carid':form.carid.value,
+                  'start_time':form.start_datetime.value,
+                  'end_time':form.end_datetime.value}),
+             dataType: "json",
+             contentType: "application/json; charset=utf-8",
+             success: function (data) {
+                 data = data.features.pop().geometry.coordinates;
+                 layer.remove();
+                 layer = new L.Polyline.AntPath(data, {color: 'red', weight: 8, delay:2400});
+                 layer.addTo(map);
+             }
+         })
+      });
+        $("#button_queryAll").click(function () {
+          const url = 'firebase/';
+          $.ajax({
+             type: "post",
+             url: url,
+             dataType: "json",
+             contentType: "application/json; charset=utf-8",
+             success: function (data) {
+                 layer.remove();
+                  heatmapData = data;
+                  layer = L.heatLayer(heatmapData, {radius:5, max:0.001,blur:9});
+                  layer.addTo(map);
+             }
+         })
+      });
+        $("#button_query").click(function () {
+          const url = 'point/';
+          $.ajax({
+             type: "post",
+             url: url,
+             data:JSON.stringify(
+                 {'carid':form.carid.value,
+                  'start_time':form.start_datetime.value,
+                  'end_time':form.end_datetime.value}),
+             dataType: "json",
+             contentType: "application/json; charset=utf-8",
+             success: function (data) {
+                 data.features.pop();
+                 layer.remove();
+                 layer = L.geoJSON(data, {
+                      style: myStyle,
+                      onEachFeature: onEachFeature,
+                      pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, geojsonMarkerOptions);
+                  }});
+                  form.line.value=line;
+                  layer.addTo(map);
+             }
+         })
+      });
+        $("#button_speed").click(function () {
+          const url = 'firebase/';
+          $.ajax({
+             type: "post",
+             url: url,
+             data:JSON.stringify(
+                 {'carid':form.carid.value,
+                  'start_time':form.start_datetime.value,
+                  'end_time':form.end_datetime.value}),
+             dataType: "json",
+             contentType: "application/json; charset=utf-8",
+             success: function (data) {
+                  layer.remove();
+                  heatmapData = data;
+                  layer = L.heatLayer(heatmapData, {radius:6, max:0.001,blur:9});
+                  layer.addTo(map);
+             }
+         })
+      });
+
+
+        const roads = L.gridLayer.googleMutant({
+          type: 'satellite' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+      }).addTo(map);
+
+
+    </script>
+  </body>
+</html>

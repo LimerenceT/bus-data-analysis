@@ -1,33 +1,29 @@
 from sanic import Sanic
 from sanic.response import json, file
 from tools.gen_geojson import get_result
-from tools.stations import get_stations
 from tools.gen_speedjson import get_speedjson
 app = Sanic()
 
 
 @app.route("/")
-async def test(request):
-    return await file('./leaf.html')
+async def index(request):
+    return await file('./map.html')
 
 
-@app.route("/<choice>/<carid>/<start>/<end>")
-async def tes(request, choice, carid, start, end):
-    start = start.replace('%20', ' ').replace('-', '/')
-    end = end.replace('%20', ' ').replace('-', '/')
+@app.route('/<choice>/', methods=['POST'])
+async def query(request, choice):
+    request_data = request.json or {}
+    carid = request_data.get('carid', None) or '%'
+    start = request_data.get('start_time', None) or '2017/03/13 16:00:00'
+    end = request_data.get('end_time', None) or '2017/03/13 20:00:00'
     if choice == 'point':
         return json(get_result(carid, start, end))
     elif choice == 'firebase':
         return json(get_speedjson(carid, start, end))
 
 
-@app.route("/line/<line>/<num>")
-async def line(request, line, num):
-    return json(get_stations(line)[int(num)])
-
-
 @app.route("/js/<js>")
-async def line(request, js):
+async def get_js(request, js):
     return await file('js/{}'.format(js))
 
 

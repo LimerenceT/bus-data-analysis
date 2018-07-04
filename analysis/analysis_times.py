@@ -1,7 +1,11 @@
 from tools.gen_geojson import get_data, gen_sql
 from math import radians, cos, sin, asin, sqrt
 
-"""分析一天的往返次数,每天跑几个来回"""
+"""
+analysis_times
+
+分析一天的往返次数,每天跑几个来回
+"""
 
 
 def haversine(latlng1: tuple, latlng2: tuple) -> float:  # 经度1，纬度1，经度2，纬度2 （十进制度数）
@@ -23,7 +27,7 @@ def haversine(latlng1: tuple, latlng2: tuple) -> float:  # 经度1，纬度1，�
 
 
 def get_times(carid: str) -> list:
-    sql = gen_sql(carid, "2017/03/16 00:01:00", "2017/03/16 23:59:00")
+    sql = gen_sql(carid, "2017/03/13 00:01:00", "2017/03/13 23:59:00")
     data = get_data(sql)
     go = True
     times = []
@@ -31,9 +35,9 @@ def get_times(carid: str) -> list:
         latlng = (point['LONGITUDE'], point['LATITUDE'])
         if latlng == (0.0, 0.0):
             continue
-        end_latlng = (106.53072, 29.63871)
+        end_latlng = (106.54179, 29.56127)  # 106.53072, 29.63871
         distance = haversine(latlng, end_latlng)
-        if distance <= 10:
+        if distance <= 40:
             if go:
                 times.append(point["GPS_TIME"])
                 go = False
@@ -41,4 +45,8 @@ def get_times(carid: str) -> list:
                 continue
         else:
             go = True
+    print(times)
     return times
+
+
+get_times('12014')

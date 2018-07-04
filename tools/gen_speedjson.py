@@ -1,5 +1,11 @@
 from .gen_geojson import get_data, gen_sql
 
+"""
+geo_speedjson
+
+读取数据库，提取每一条数据的速度信息，生成和speed属性相关的geojson传给前端渲染
+"""
+
 
 def gen(data: list):
     result = []
